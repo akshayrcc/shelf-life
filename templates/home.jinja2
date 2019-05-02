@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head></head>
+<body>
+	<h1>{{ blog['name']}}</h1>
+	<p>Welcome !!!</p>
+	
+	<ul>
+	{%  for post_id, post in blog['posts'].items() %}
+		<li> <a href=" {{ url_for('post',post_id=post_id) }}"> {{ post['title'] }}</a> </li>
+	{%  endfor %}
+	
+	</ul>
+</body>
+</html>
