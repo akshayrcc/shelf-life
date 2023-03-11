@@ -15,7 +15,9 @@ Steps to start:
 
 Command for virtual env:
 
-python3 -m venv venv
+python3 -m venv venv --system-site-packages
+source venv/bin/activate
+deactivate
 
 # Assignment # 1:
 
