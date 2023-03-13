@@ -12,7 +12,7 @@ app = Flask(__name__)
 cors = CORS(app, resources={r"/*": {"origins": "*"}})
 
 app.secret_key = 'thesecretkey'
-app.permanent_session_lifetime = timedelta(seconds=10)
+app.permanent_session_lifetime = timedelta(minutes=10)
 
 # app.config['MYSQL_HOST'] = '127.0.0.1'
 # app.config['MYSQL_USER'] = 'root'
