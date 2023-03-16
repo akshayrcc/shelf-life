@@ -8,10 +8,12 @@
 		<div class="one">
 			<div class="two">
 				<h1>Side Bar</h1>
+                <div style="text-align: center;">Logged in User: {{ username }}</div>
 				<ul>
 					<li><a href="{{url_for('index')}}">Index</a></li>
 					<li><a href="{{url_for('display')}}">Display</a></li>
 					<li class="active"><a href="{{url_for('update')}}">Update</a></li>
+                    <li><a href="{{url_for('admin')}}">Admin</a></li>
 					<li><a href="{{url_for('logout')}}">Log out</a></li>
 				</ul>
 			</div>

@@ -54,7 +54,7 @@ def login():
             # session['username'] = account['username']
             session['username'] = account[1]
             msg = 'Logged in successfully !'
-            return render_template('index.html', msg=msg)
+            return render_template('index.html', msg=msg, username=session["username"])
         else:
             msg = 'Incorrect username / password !'
     if request.method == 'GET' and 'loggedin' in session:
@@ -110,8 +110,9 @@ def register():
 @app.route("/index")
 def index():
     session.modified = True
+    print("index acct is", session['username'])
     if 'loggedin' in session:
-        return render_template("index.html")
+        return render_template("index.html",  username=session['username'])
     return redirect(url_for('login'))
 
 
@@ -122,8 +123,8 @@ def display():
         # cursor = cur.cursor(MySQLdb.cursors.DictCursor)
         cur.execute('SELECT * FROM accounts WHERE id = % s', (session['id'],))
         account = cur.fetchone()
-        print("acct is", account)
-        return render_template("display.html", account=account)
+        print("display acct is", account)
+        return render_template("display.html", account=account, username=session['username'])
     return redirect(url_for('login'))
 
 
@@ -164,7 +165,7 @@ def update():
                 msg = 'You have successfully updated !'
         elif request.method == 'POST':
             msg = 'Please fill out the form !'
-        return render_template("update.html", msg=msg)
+        return render_template("update.html", msg=msg, username=session['username'])
     return redirect(url_for('login'))
 
 
@@ -190,7 +191,7 @@ def isAdmin(func):
     @wraps(func)
     def decorated(*args, **kwargs):
         if (not (session["loggedin"] and session["username"] == 'admin')):
-            return render_template('401.html'), 401
+            return render_template('401.html', username=session['username']), 401
         return func(*args, **kwargs)
 
     return decorated
@@ -199,14 +200,14 @@ def isAdmin(func):
 @app.route("/admin", methods=['POST', 'GET'])
 @isAdmin
 def admin():
-    return render_template("admin.html")
+    return render_template("admin.html", username=session['username'])
 
 
 # 401 error page
 @app.errorhandler(401)
 def unauthorized(error):
-    return render_template('401.html'), 401
+    return render_template('401.html', username=session['username']), 401
 
 
 if __name__ == "__main__":
-    app.run(host="localhost", port=int("5500"), debug=True)
+    app.run(host="localhost", port=int("5200"), debug=True)

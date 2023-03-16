@@ -1,10 +1,30 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <title>401 Unauthorized</title>
-  </head>
-  <body>
-    <h1>401 Unauthorized</h1>
-    <p>You are not authorized to access this page.</p>
-  </body>
+<html lang="en">
+	<head>
+		<title>index</title>
+		<link rel="stylesheet" href="../static/style.css">
+	</head>
+
+	<body bgcolor="#e6ffee">
+		<div class="one">
+			<div class="two">
+				<h1>Side Bar</h1>
+                <div style="text-align: center;">Logged in User: {{ username }}</div>
+				<ul>
+					<li class="active"><a href="{{url_for('index')}}">Index</a></li>
+					<li><a href="{{url_for('display')}}">Display</a></li>
+					<li><a href="{{url_for('update')}}">Update</a></li>
+                    <li><a href="{{url_for('admin')}}">Admin</a></li>
+					<li><a href="{{url_for('logout')}}">Log out</a></li>
+				</ul>
+			</div>
+			<div class="content" align="center">
+				<div class="topbar">
+					<h1>401 Unauthorized</h1>
+				</div></br></br>
+				<div class="contentbar">
+					<div class="msg"><p>You are not authorized to access this page.</p></div>
+				</div>
+			</div>
+		</div>
+	</body>
 </html>

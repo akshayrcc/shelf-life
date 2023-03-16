@@ -7,13 +7,15 @@
 
 	<body bgcolor="#e6ffee">
 		<div class="one">
-            <h1> Welcome {{ content }}</h1>
+            <h1> Welcome </h1>
 			<div class="two">
 				<h1>Side Bar</h1>
+                <div style="text-align: center;">Logged in User: {{ username }}</div>
 				<ul>
 					<li class="active"><a href="{{url_for('index')}}">Index</a></li>
 					<li><a href="{{url_for('display')}}">Display</a></li>
 					<li><a href="{{url_for('update')}}">Update</a></li>
+                    <li><a href="{{url_for('admin')}}">Admin</a></li>
 					<li><a href="{{url_for('logout')}}">Log out</a></li>
 				</ul>
 			</div>
