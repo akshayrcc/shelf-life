@@ -1,4 +1,6 @@
-from flask import Flask, render_template, request, redirect, url_for, session
+from functools import wraps
+
+from flask import Flask, render_template, request, redirect, url_for, session, abort
 # from  flask_mysqldb import MySQL
 import pymysql
 from flask_cors import CORS
@@ -43,7 +45,7 @@ def login():
         # conn.commit()
         account = cur.fetchone()
         # account = json.dumps(account)
-        print("Login time acct" , account)
+        print("Login time acct", account)
         if account:
             session['loggedin'] = True
             # session['id'] = account['id']
@@ -99,7 +101,7 @@ def register():
             # cur.commit()
             conn.commit()
             msg = 'You have successfully registered !'
-            print("Second time ",  account)
+            print("Second time ", account)
     elif request.method == 'POST':
         msg = 'Please fill out the form !'
     return render_template('register.html', msg=msg)
@@ -120,6 +122,7 @@ def display():
         # cursor = cur.cursor(MySQLdb.cursors.DictCursor)
         cur.execute('SELECT * FROM accounts WHERE id = % s', (session['id'],))
         account = cur.fetchone()
+        print("acct is", account)
         return render_template("display.html", account=account)
     return redirect(url_for('login'))
 
@@ -129,6 +132,9 @@ def update():
     msg = ''
     if 'loggedin' in session:
         session.modified = True
+        # cur.execute('SELECT * FROM accounts WHERE id = % s', (session['id'],))
+        # account = cur.fetchone()
+        # render_template("update.html", account=account)
         if request.method == 'POST' and 'username' in request.form and 'password' in request.form and 'email' in request.form and 'address' in request.form and 'city' in request.form and 'country' in request.form and 'postalcode' in request.form and 'organisation' in request.form:
             username = request.form['username']
             password = request.form['password']
@@ -160,6 +166,46 @@ def update():
             msg = 'Please fill out the form !'
         return render_template("update.html", msg=msg)
     return redirect(url_for('login'))
+
+
+# define username and password
+USERNAME = 'admin'
+PASSWORD = 'admin'
+
+
+# admin page
+# @app.route('/admin')
+# def admin():
+#     # check if the user is authorized
+#     auth = request.authorization
+#     print(auth)
+#     if not auth or auth.username != USERNAME or auth.password != PASSWORD:
+#         # if not authorized, show 401 error page
+#         abort(401)
+#     # if authorized, show admin page
+#     return render_template('admin.html')
+
+
+def isAdmin(func):
+    @wraps(func)
+    def decorated(*args, **kwargs):
+        if (not (session["loggedin"] and session["username"] == 'admin')):
+            return render_template('401.html'), 401
+        return func(*args, **kwargs)
+
+    return decorated
+
+
+@app.route("/admin", methods=['POST', 'GET'])
+@isAdmin
+def admin():
+    return render_template("admin.html")
+
+
+# 401 error page
+@app.errorhandler(401)
+def unauthorized(error):
+    return render_template('401.html'), 401
 
 
 if __name__ == "__main__":
