@@ -1,6 +1,6 @@
 # My Flask App
 ## Setup:
-### Steps to start:
+### Steps to run:
     Create a directory for Flask. e.g. D:\Flask\
     In cmd, cd D:\Flask.
     pip install virtualenv
@@ -16,7 +16,9 @@ python3 -m venv venv --system-site-packages
 source venv/bin/activate
 deactivate
 
+### Dependencies:
 Install python, flask, mysql.
+    pip3 install mongoengine flask-mongoengine dnspython 
 
 ## Requirements:
 ### Task 1: Setting up the Flask application
