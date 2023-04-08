@@ -1,5 +1,8 @@
 from flask import Flask, jsonify, request
 from flask_mongoengine import MongoEngine
+from mongoengine import connect, Document, StringField, FloatField, DoesNotExist, ValidationError
+from werkzeug.exceptions import BadRequest, NotFound, InternalServerError
+
 from api_constants import mongdb_username, mongodb_pass, mongdb_dbname
 import urllib
 
@@ -35,9 +38,9 @@ def index():
 
 # create Book model
 class Book(db.Document):
-    title = db.StringField(required=True)
-    author = db.StringField(required=True)
-    price = db.FloatField(required=True)
+    title = db.StringField(required=True, max_length=100)
+    author = db.StringField(required=True, max_length=100)
+    price = db.FloatField(required=True, min_value=0)
 
 
 # create routes for CRUD operations
@@ -49,53 +52,65 @@ class Book(db.Document):
 
 @app.route('/books', methods=['POST'])
 def create_book():
-    books = request.json
-    created_books = []
-    for book_data in books:
+    try:
+        book_data = request.json
         book = Book(**book_data)
         book.save()
-        created_books.append(book)
-    return jsonify(created_books), 201
+        return book.to_json(), 201
+    except (ValueError, KeyError):
+        raise BadRequest("Invalid book data")
 
 
 @app.route('/books', methods=['GET'])
 def get_all_books():
-    books = Book.objects.all()
-    response = []
-    for book in books:
-        response.append({'title': book.title, 'author': book.author, 'price': book.price})
-    return jsonify(response)
+    books = Book.objects().to_json()
+    return books, 200
 
 
-@app.route('/books/<id>', methods=['GET'])
-def get_book(id):
-    book = Book.objects(id=id).first()
-    if book:
-        response = {'title': book.title, 'author': book.author, 'price': book.price}
-    else:
-        response = {'message': 'Book not found'}
-    return jsonify(response)
+@app.route('/books/<book_id>', methods=['GET'])
+def get_book(book_id):
+    try:
+        book = Book.objects.get(id=book_id)
+        return book.to_json(), 200
+    except DoesNotExist:
+        raise NotFound("Book not found")
+    except ValidationError:
+        raise BadRequest("Invalid book ID")
 
 
-@app.route('/books/<id>', methods=['PUT'])
-def update_book(id):
-    book_data = request.json
-    result = Book.objects(id=id).update_one(**book_data)
-    if result:
-        response = {'message': 'Book updated successfully'}
-    else:
-        response = {'message': 'Book not found'}
-    return jsonify(response)
+@app.route('/books/<book_id>', methods=['PUT'])
+def update_book(book_id):
+    try:
+        book = Book.objects(id=book_id).first()
+        if not book:
+            raise NotFound("Book not found")
+        book_data = request.json
+        book.update(**book_data)
+        return book.to_json(), 200
+    except (ValueError, KeyError):
+        raise BadRequest("Invalid book data")
 
 
-@app.route('/books/<id>', methods=['DELETE'])
-def delete_book(id):
-    result = Book.objects(id=id).delete()
-    if result:
-        response = {'message': 'Book deleted successfully'}
-    else:
-        response = {'message': 'Book not found'}
-    return jsonify(response)
+@app.route('/books/<book_id>', methods=['DELETE'])
+def delete_book(book_id):
+    try:
+        book = Book.objects.get(id=book_id)
+        book.delete()
+        return '', 204  #returning No Content after deletion
+    except DoesNotExist:
+        raise NotFound("Book not found")
+    except ValidationError:
+        raise BadRequest("Invalid book ID")
+
+
+
+@app.errorhandler(BadRequest)
+@app.errorhandler(NotFound)
+@app.errorhandler(InternalServerError)
+def handle_errors(error):
+    response = jsonify({'error': str(error)})
+    response.status_code = error.code if hasattr(error, 'code') else 500
+    return response
 
 
 if __name__ == '__main__':
