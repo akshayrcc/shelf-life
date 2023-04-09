@@ -54,12 +54,26 @@ structure.)
 
 Flask routes:
 
-    GET /: Returns a simple "Hello, World!" message.
-    POST /register: Registers a new user by accepting a JSON payload with username and password fields.
-    POST /login: Logs in a user by accepting a JSON payload with username and password fields. Returns a JWT token that the client can use to authenticate future requests.
-    POST /books: Creates a new book by accepting a JSON payload with title, author, and price fields. Requires authentication via a JWT token in the Authorization header.
-    GET /books: Returns all books in the database. Requires authentication via a JWT token in the Authorization header.
-    GET /books/<book_id>: Returns a single book with the specified book_id. Requires authentication via a JWT token in the Authorization header.
+    GET /:
+    Returns a simple "Hello, World!" message.
+
+    POST /register:
+    Registers a new user with the given username and password in the JSON payload. The response includes the user's id, username, and a JWT token.
+    
+    POST /login:
+    Logs in a user with the given username and password in the JSON payload. The response includes a JWT token that needs to be used for accessing the protected routes.
+    
+    GET /books:
+    Returns a list of all the books available in the database with only title and id fields.
+    
+    POST /books:
+    Adds a new book with the given title, author, and price in the JSON payload. This endpoint is protected and needs a JWT token in the Authorization header.
+    
+    GET /books/search?title=<title>:
+    Searches for books by their title. The response includes a list of books matching the given title with only title and id fields.
+    
+    GET /books/<book_id>:
+    Gets the details of a book with the given book_id. The response includes the details of the book including title, author, and price. This endpoint is protected and needs a JWT token in the Authorization header.
 
 MongoDB models:
 
