@@ -2,10 +2,11 @@ from flask import Flask, jsonify, request
 from flask_mongoengine import MongoEngine
 from mongoengine import connect, Document, StringField, FloatField, DoesNotExist, ValidationError
 from werkzeug.exceptions import BadRequest, NotFound, InternalServerError
-
-from api_constants import mongdb_username, mongodb_pass, mongdb_dbname
+from api_constants import mongdb_username, mongodb_pass, mongdb_dbname, secret_key
 import urllib
-
+import jwt
+from datetime import datetime, timedelta
+from functools import wraps
 # from  flask_mysqldb import MySQL
 import pymysql
 from flask_cors import CORS
@@ -22,8 +23,13 @@ DB_URI = "mongodb+srv://{}:{}@cluster0.jgh89vm.mongodb.net/{}".format(
 
 app.config["MONGODB_HOST"] = DB_URI
 
-db = MongoEngine()
-db.init_app(app)
+connect(host=app.config['MONGODB_HOST'])
+
+app.config['JWT_SECRET_KEY'] = secret_key
+app.config['JWT_EXPIRATION_DELTA'] = timedelta(minutes=15)
+
+# db = MongoEngine()
+# db.init_app(app)
 
 # CORS(app)
 cors = CORS(app, resources={r"/*": {"origins": "*"}})
@@ -34,11 +40,68 @@ def index():
     return "Hello, World!"
 
 
-# create Book model
-class Book(db.Document):
-    title = db.StringField(required=True, max_length=100)
-    author = db.StringField(required=True, max_length=100)
-    price = db.FloatField(required=True, min_value=0)
+class User(Document):
+    username = StringField(required=True, max_length=100)
+    password = StringField(required=True, max_length=100)
+
+
+class Book(Document):
+    title = StringField(required=True, max_length=100)
+    author = StringField(required=True, max_length=100)
+    price = FloatField(required=True, min_value=0)
+
+
+# class Book(db.Document):
+#     title = db.StringField(required=True, max_length=100)
+#     author = db.StringField(required=True, max_length=100)
+#     price = db.FloatField(required=True, min_value=0)
+
+@app.route('/register', methods=['POST'])
+def register():
+    username = request.json.get('username')
+    password = request.json.get('password')
+
+    if not username or not password:
+        raise BadRequest("Please provide username and password")
+
+    try:
+        user = User(username=username, password=password)
+        user.save()
+        return jsonify({'message': 'User created successfully'}), 201
+    except (ValueError, KeyError):
+        raise BadRequest("Invalid user data")
+
+@app.route('/login', methods=['POST'])
+def login():
+    username = request.json.get('username')
+    password = request.json.get('password')
+
+    if not username or not password:
+        raise BadRequest("Please provide username and password")
+
+    try:
+        user = User.objects.get(username=username, password=password)
+    except DoesNotExist:
+        raise BadRequest("Invalid username or password")
+
+    # generate JWT token
+    payload = {
+        'user_id': str(user.id),
+        'exp': datetime.utcnow() + app.config['JWT_EXPIRATION_DELTA']
+    }
+    token = jwt.encode(payload, app.config['JWT_SECRET_KEY'], algorithm='HS256')
+
+    return jsonify({'token': token}), 200
+
+
+def authenticate_user(token):
+    try:
+        payload = jwt.decode(token, app.config['JWT_SECRET_KEY'], algorithms=['HS256'])
+        user_id = payload.get('user_id')
+        user = User.objects.get(id=user_id)
+        return user
+    except Exception:
+        return None
 
 
 # create routes for CRUD operations
@@ -50,6 +113,15 @@ class Book(db.Document):
 
 @app.route('/books', methods=['POST'])
 def create_book():
+    auth_header = request.headers.get('Authorization')
+    if not auth_header:
+        raise BadRequest("Please provide an authorization header")
+
+    token = auth_header.split(" ")[1]
+    user = authenticate_user(token)
+    if not user:
+        raise BadRequest("Invalid or expired token")
+
     try:
         book_data = request.json
         book = Book(**book_data)
@@ -67,6 +139,14 @@ def get_all_books():
 
 @app.route('/books/<book_id>', methods=['GET'])
 def get_book(book_id):
+    auth_header = request.headers.get('Authorization')
+    if not auth_header:
+        raise BadRequest("Please provide an authorization header")
+
+    token = auth_header.split(" ")[1]
+    user = authenticate_user(token)
+    if not user:
+        raise BadRequest("Invalid or expired token")
     try:
         book = Book.objects.get(id=book_id)
         return book.to_json(), 200
@@ -78,6 +158,15 @@ def get_book(book_id):
 
 @app.route('/books/<book_id>', methods=['PUT'])
 def update_book(book_id):
+    auth_header = request.headers.get('Authorization')
+    if not auth_header:
+        raise BadRequest("Please provide an authorization header")
+
+    token = auth_header.split(" ")[1]
+    user = authenticate_user(token)
+    if not user:
+        raise BadRequest("Invalid or expired token")
+
     try:
         book = Book.objects(id=book_id).first()
         if not book:
@@ -91,15 +180,38 @@ def update_book(book_id):
 
 @app.route('/books/<book_id>', methods=['DELETE'])
 def delete_book(book_id):
+    auth_header = request.headers.get('Authorization')
+    if not auth_header:
+        raise BadRequest("Please provide an authorization header")
+
+    token = auth_header.split(" ")[1]
+    user = authenticate_user(token)
+    if not user:
+        raise BadRequest("Invalid or expired token")
     try:
         book = Book.objects.get(id=book_id)
         book.delete()
-        return '', 204  #returning No Content after deletion
+        return '', 204  # returning No Content after deletion
     except DoesNotExist:
         raise NotFound("Book not found")
     except ValidationError:
         raise BadRequest("Invalid book ID")
 
+
+@app.route('/protected', methods=['GET'])
+def protected():
+    token_str = request.headers.get('Authorization')
+    if not token_str:
+        raise BadRequest("Token is missing")
+
+    try:
+        token = token_str.split()[1]
+        payload = jwt.decode(token, app.config['JWT_SECRET_KEY'], algorithms=['HS256'])
+        user_id = payload.get('user_id')
+        user = User.objects.get(id=user_id)
+        return jsonify({'message': 'Welcome, {}!'.format(user.username)}), 200
+    except (jwt.exceptions.InvalidTokenError, jwt.exceptions.ExpiredSignatureError):
+        raise BadRequest("Invalid token")
 
 
 @app.errorhandler(BadRequest)

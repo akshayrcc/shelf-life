@@ -48,3 +48,25 @@ structure.)
 </br>● Create a public route that allows users to view public information.
 </br>● Implement an endpoint that returns a list of items that can be viewed publicly.
 </br>● Ensure that this endpoint does not require authentication.
+
+
+## Project Details:
+
+Flask routes:
+
+    GET /: Returns a simple "Hello, World!" message.
+    POST /register: Registers a new user by accepting a JSON payload with username and password fields.
+    POST /login: Logs in a user by accepting a JSON payload with username and password fields. Returns a JWT token that the client can use to authenticate future requests.
+    POST /books: Creates a new book by accepting a JSON payload with title, author, and price fields. Requires authentication via a JWT token in the Authorization header.
+    GET /books: Returns all books in the database. Requires authentication via a JWT token in the Authorization header.
+    GET /books/<book_id>: Returns a single book with the specified book_id. Requires authentication via a JWT token in the Authorization header.
+
+MongoDB models:
+
+    User: Represents a user with username and password fields.
+    Book: Represents a book with title, author, and price fields.
+
+Function:
+
+    authenticate_user that takes a JWT token as input and returns the corresponding user if the token is valid and has not expired. 
+    This function is used to authenticate requests to the /books and /books/<book_id> routes.
