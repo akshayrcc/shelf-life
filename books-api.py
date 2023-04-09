@@ -16,11 +16,9 @@ from flask_cors import CORS
 
 app = Flask(__name__)
 
-# DB_URI = "mongodb+srv://{}:{}@cluster0.jgh89vm.mongodb.net/{}".format(
-#     urllib.parse.quote_plus(mongdb_username), urllib.parse.quote_plus(mongodb_pass), mongdb_dbname,
-# )
-
-DB_URI = "mongodb+srv://akshayrc:Pass%40007@cluster0.jgh89vm.mongodb.net/API"
+DB_URI = "mongodb+srv://{}:{}@cluster0.jgh89vm.mongodb.net/{}".format(
+    urllib.parse.quote_plus(mongdb_username), urllib.parse.quote_plus(mongodb_pass), mongdb_dbname,
+)
 
 app.config["MONGODB_HOST"] = DB_URI
 
