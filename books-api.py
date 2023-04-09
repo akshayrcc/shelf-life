@@ -2,7 +2,7 @@ from flask import Flask, jsonify, request
 from flask_mongoengine import MongoEngine
 from mongoengine import connect, Document, StringField, FloatField, DoesNotExist, ValidationError
 from werkzeug.exceptions import BadRequest, NotFound, InternalServerError
-from api_constants import mongdb_username, mongodb_pass, mongdb_dbname, secret_key
+from api_constants import mongdb_username, mongodb_pass, mongdb_dbname, secret_key, UPLOAD_FOLDER, ALLOWED_EXTENSIONS
 import urllib
 import jwt
 from datetime import datetime, timedelta
@@ -10,6 +10,8 @@ from functools import wraps
 # from  flask_mysqldb import MySQL
 import pymysql
 from flask_cors import CORS
+from werkzeug.utils import secure_filename
+import os
 
 # import MySQLdb.cursors
 # import re
@@ -22,17 +24,17 @@ DB_URI = "mongodb+srv://{}:{}@cluster0.jgh89vm.mongodb.net/{}".format(
 )
 
 app.config["MONGODB_HOST"] = DB_URI
-
-connect(host=app.config['MONGODB_HOST'])
-
 app.config['JWT_SECRET_KEY'] = secret_key
 app.config['JWT_EXPIRATION_DELTA'] = timedelta(minutes=15)
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # db = MongoEngine()
 # db.init_app(app)
 
 # CORS(app)
 cors = CORS(app, resources={r"/*": {"origins": "*"}})
+
+connect(host=app.config['MONGODB_HOST'])
 
 
 @app.route("/")
@@ -70,6 +72,7 @@ def register():
         return jsonify({'message': 'User created successfully'}), 201
     except (ValueError, KeyError):
         raise BadRequest("Invalid user data")
+
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -212,6 +215,40 @@ def protected():
         return jsonify({'message': 'Welcome, {}!'.format(user.username)}), 200
     except (jwt.exceptions.InvalidTokenError, jwt.exceptions.ExpiredSignatureError):
         raise BadRequest("Invalid token")
+
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def allowed_size(filesize):
+    max_size = 2 * 1024 * 1024  # 2 MB
+    return int(filesize) <= max_size
+
+
+@app.route('/upload-file', methods=['POST'])
+def upload_file():
+    auth_header = request.headers.get('Authorization')
+    if not auth_header:
+        raise BadRequest("Please provide an authorization header")
+
+    token = auth_header.split(" ")[1]
+    user = authenticate_user(token)
+    if not user:
+        raise BadRequest("Invalid or expired token")
+
+    if not request.files.__len__():
+        raise BadRequest('No file part')
+
+    file = request.files.values().__next__()
+    if file.filename == '':
+        raise BadRequest('No selected file')
+
+    if file and allowed_file(file.filename) and allowed_size(request.headers.get('Content-Length')):
+        filename = secure_filename(file.filename)
+        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        return jsonify({'message': 'File uploaded successfully'}), 200
+    else:
+        raise BadRequest('Invalid file type')
 
 
 @app.errorhandler(BadRequest)
