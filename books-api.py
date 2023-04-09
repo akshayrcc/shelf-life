@@ -134,10 +134,30 @@ def create_book():
         raise BadRequest("Invalid book data")
 
 
+# this endpoint is public and can be accessed without auth. IT returns list of books and their ids only, which we have made public for the app.
 @app.route('/books', methods=['GET'])
+# def get_all_books():
+#     books = Book.objects().to_json()
+#     return books, 200
 def get_all_books():
-    books = Book.objects().to_json()
-    return books, 200
+    books = Book.objects.only('title')
+    # Construct a list of dictionaries containing only the title and ID fields
+    book_list = [{'id': str(book.id), 'title': book.title} for book in books]
+    return {'books': book_list}, 200
+
+@app.route('/books/search', methods=['GET'])
+def search_books():
+    title = request.args.get('title')
+    if not title:
+        raise BadRequest("Please provide a book title to search for")
+
+    # Perform a case-insensitive search for books with the given title
+    books = Book.objects(title=title).only('title')
+
+    # Construct a list of dictionaries containing only the title and ID fields
+    book_list = [{'id': str(book.id), 'title': book.title} for book in books]
+
+    return {'books': book_list}, 200
 
 
 @app.route('/books/<book_id>', methods=['GET'])
