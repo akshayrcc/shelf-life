@@ -120,10 +120,16 @@ def create_book():
         raise BadRequest("Invalid or expired token")
 
     try:
-        book_data = request.json
-        book = Book(**book_data)
-        book.save()
-        return book.to_json(), 201
+        book_data_list = request.json
+        books = []
+
+        for book_data in book_data_list:
+            book = Book(**book_data)
+            book.save()
+            books.append(book)
+
+        return [book.to_json() for book in books], 201
+
     except (ValueError, KeyError):
         raise BadRequest("Invalid book data")
 
