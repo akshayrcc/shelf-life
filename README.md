@@ -83,6 +83,9 @@ Flask routes:
     GET /books/<book_id>:
     Gets the details of a book with the given book_id. The response includes the details of the book including title, author, and price. This endpoint is protected and needs a JWT token in the Authorization header.
 
+    POST /upload-file
+    Uploads a multi-part file to uploads directory.
+
 MongoDB models:
 
     User: Represents a user with username and password fields.
