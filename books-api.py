@@ -2,7 +2,8 @@ from flask import Flask, jsonify, request
 from flask_mongoengine import MongoEngine
 from mongoengine import connect, Document, StringField, FloatField, DoesNotExist, ValidationError
 from werkzeug.exceptions import BadRequest, NotFound, InternalServerError
-from api_constants import mongdb_username, mongodb_pass, mongdb_dbname, secret_key, UPLOAD_FOLDER, ALLOWED_EXTENSIONS
+from api_constants import mongdb_username, mongodb_pass, mongodb_hostname, mongdb_dbname, secret_key, UPLOAD_FOLDER, \
+    ALLOWED_EXTENSIONS
 import urllib
 import jwt
 from datetime import datetime, timedelta
@@ -17,12 +18,14 @@ import os
 # import re
 # from datetime import timedelta
 
+
 app = Flask(__name__)
 
-DB_URI = "mongodb+srv://{}:{}@cluster0.jgh89vm.mongodb.net/{}".format(
-    urllib.parse.quote_plus(mongdb_username), urllib.parse.quote_plus(mongodb_pass), mongdb_dbname,
+DB_URI = "mongodb+srv://{}:{}@{}/{}".format(
+    urllib.parse.quote_plus(mongdb_username), urllib.parse.quote_plus(mongodb_pass), mongodb_hostname, mongdb_dbname,
 )
 
+# Setting up the app config
 app.config["MONGODB_HOST"] = DB_URI
 app.config['JWT_SECRET_KEY'] = secret_key
 app.config['JWT_EXPIRATION_DELTA'] = timedelta(minutes=15)
@@ -42,6 +45,7 @@ def index():
     return "Hello, World!"
 
 
+# setting up data models
 class User(Document):
     username = StringField(required=True, max_length=100)
     password = StringField(required=True, max_length=100)
@@ -53,11 +57,7 @@ class Book(Document):
     price = FloatField(required=True, min_value=0)
 
 
-# class Book(db.Document):
-#     title = db.StringField(required=True, max_length=100)
-#     author = db.StringField(required=True, max_length=100)
-#     price = db.FloatField(required=True, min_value=0)
-
+# public routes below. These endpoints are public and can be accessed without auth.
 @app.route('/register', methods=['POST'])
 def register():
     username = request.json.get('username')
@@ -107,13 +107,7 @@ def authenticate_user(token):
         return None
 
 
-# create routes for CRUD operations
-# @app.route('/books', methods=['POST'])
-# def create_book():
-#     book_data = request.json
-#     book = Book(**book_data).save()
-#     return jsonify({'message': 'Book created successfully'})
-
+# create route for CRUD operations
 @app.route('/books', methods=['POST'])
 def create_book():
     auth_header = request.headers.get('Authorization')
@@ -134,12 +128,8 @@ def create_book():
         raise BadRequest("Invalid book data")
 
 
-# this endpoint is public and can be accessed without auth.
 # It returns list of books and their ids only, which we have made public for the app.
 @app.route('/books', methods=['GET'])
-# def get_all_books():
-#     books = Book.objects().to_json()
-#     return books, 200
 def get_all_books():
     books = Book.objects.only('title')
     # Construct a list of dictionaries containing only the title and ID fields
@@ -162,6 +152,7 @@ def search_books():
     return {'books': book_list}, 200
 
 
+# private routes below
 @app.route('/books/<book_id>', methods=['GET'])
 def get_book(book_id):
     auth_header = request.headers.get('Authorization')
