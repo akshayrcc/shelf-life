@@ -3,6 +3,12 @@
 ## BOOKS-API
 Building a RESTful API with Flask - Error Handling, Authentication, and
 File Handling with Public and Admin Routes
+
+## Dev Team Members
+    Akshay Chaudhari
+    Sambhaji Ippar
+
+
 ## Setup:
 ### Steps to run:
     python -m venv env
@@ -10,7 +16,6 @@ File Handling with Public and Admin Routes
     pip install -r requirements.txt
     python3 books-api.py
     hit localhost:5000.
-
 
 
 ### Command for virtual env:
