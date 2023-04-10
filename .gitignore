@@ -26,3 +26,4 @@ yarn-error.log*
 
 #dont check in virtual env file
 venv
+env

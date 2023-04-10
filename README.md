@@ -1,26 +1,26 @@
 # My Flask App
+
+## BOOKS-API
+Building a RESTful API with Flask - Error Handling, Authentication, and
+File Handling with Public and Admin Routes
 ## Setup:
 ### Steps to run:
-    Create a directory for Flask. e.g. D:\Flask\
-    In cmd, cd D:\Flask.
-    pip install virtualenv
-    .\venv\Scripts\activate.bat
+    python -m venv env
+    source env/bin/activate  OR  .\venv\Scripts\activate.bat
     pip install -r requirements.txt
-    pip install Flask
-    create app.py
-    write code there and python app.py
+    python3 books-api.py
     hit localhost:5000.
 
 
 
 ### Command for virtual env:
 
-python3 -m venv venv --system-site-packages
-source venv/bin/activate
-deactivate
+    python3 -m venv venv --system-site-packages
+    source venv/bin/activate
+    deactivate
 
 ### Dependencies:
-Install python, flask, mysql.
+    Install python, flask, mysql.
     pip3 install mongoengine flask-mongoengine dnspython 
 
 ## Requirements:
