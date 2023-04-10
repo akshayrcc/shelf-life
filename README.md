@@ -1,14 +1,12 @@
 # My Flask App
+Building a RESTful API with Flask - Error Handling, Authentication, and
+File Handling with Public and Admin Routes
 ## Setup:
 ### Steps to run:
-    Create a directory for Flask. e.g. D:\Flask\
-    In cmd, cd D:\Flask.
-    pip install virtualenv
-    .\venv\Scripts\activate.bat
+    python -m venv env
+    source env/bin/activate  OR  .\venv\Scripts\activate.bat
     pip install -r requirements.txt
-    pip install Flask
-    create app.py
-    write code there and python app.py
+    python3 books-api.py
     hit localhost:5000.
 
 

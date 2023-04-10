@@ -134,7 +134,8 @@ def create_book():
         raise BadRequest("Invalid book data")
 
 
-# this endpoint is public and can be accessed without auth. IT returns list of books and their ids only, which we have made public for the app.
+# this endpoint is public and can be accessed without auth.
+# It returns list of books and their ids only, which we have made public for the app.
 @app.route('/books', methods=['GET'])
 # def get_all_books():
 #     books = Book.objects().to_json()
@@ -144,6 +145,7 @@ def get_all_books():
     # Construct a list of dictionaries containing only the title and ID fields
     book_list = [{'id': str(book.id), 'title': book.title} for book in books]
     return {'books': book_list}, 200
+
 
 @app.route('/books/search', methods=['GET'])
 def search_books():
@@ -239,6 +241,7 @@ def protected():
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 
 def allowed_size(filesize):
     max_size = 2 * 1024 * 1024  # 2 MB
